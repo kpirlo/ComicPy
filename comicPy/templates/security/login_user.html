@@ -1,0 +1,53 @@
+{% from "security/_macros.html" import render_field_with_errors, render_field %}
+
+<link href="/static/font-awesome/css/font-awesome.css" rel="stylesheet">
+<link href="/static/content/animate.css" rel="stylesheet">
+<link href="/static/content/style.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="/static/content/bootstrap.min.css" />
+
+<body class="gray-bg">
+    <div class="loginColumns animated fadeInDown">
+        <div class="row">
+            <div class="col-md-6">
+                <h2 class="font-bold">Welcome to Comics</h2>
+                <p>
+                    Wrapper and reader for Mylar Comic downloader.
+                </p> 
+                <p>
+                    <small></small>
+                </p>
+            </div>
+            <div class="col-md-6">
+                <div class="ibox-content">
+                    <form action="{{ url_for_security('login') }}" method="POST" name="login_user_form" class="m-t">
+                        {{ login_user_form.hidden_tag() }}
+                        <div class="form-group">
+                            {{ render_field_with_errors(login_user_form.email, class="form-control") }}
+                        </div>
+                        <div class="form-group">
+                            {{ render_field_with_errors(login_user_form.password, class="form-control") }}
+                        </div>
+                            {{ render_field_with_errors(login_user_form.remember) }}
+                            {{ render_field(login_user_form.next) }}
+                            {{ render_field(login_user_form.submit, class="btn btn-primary block full-width m-b") }}
+                        </form>
+
+                    {% include "security/_menu.html" %}
+                    <p class="m-t">
+                        <small> &copy; 2014</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <hr />
+        <div class="row">
+            <div class="col-md-6">
+                Copyright
+            </div>
+            <div class="col-md-6 text-right">
+                <small>© 2016</small>
+            </div>
+        </div>
+    </div>
+
+</body>
