@@ -1,48 +1,24 @@
-{% extends "layouts/endless_main.html" %}
+{% extends "layout.html" %}
 
 {% block content %}
-<div class="jcarousel-wrapper">
-    <div class="jcarousel movie-jcarousel" id="popularMovie">
-        <ul>
-            
-            {% for issue in newReleases %}
-            <li>
-                <a href="/comic/issue/{{issue.IssueID}}">
-                    <img src="{{issue.IssueImageURL}}" alt="Image 1">
-                    <div class="quick-detail text-white">
-                        <h5>Issue</h5>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam eros nibh, viverra a dui a, gravida varius velit.</p>
-                    </div>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
 
-    <a href="#" class="jcarousel-control-prev">&lsaquo;</a>
-    <a href="#" class="jcarousel-control-next">&rsaquo;</a>
-</div><!-- /jcarousel-wrapper -->
-
-
-
-<!--<div class="row">
+<div class="row">
     &nbsp;
 </div>
 <div class="jumbotron">
     <p class="lead">Top 5 New Releases</p>
     <p>
         <div>
-            { for issue in newReleases }
+            {% for issue in newReleases %}
       
-                <a href="/comic/issue/{issue.IssueID}">
-                    <img src="{issue.IssueImageURL}" />
+                <a href="/comic/issue/{{issue.IssueID}}">
+                    <img src="{{issue.IssueImageURL}}" />
                 </a>
-           
-            { endfor }
+
+            {% endfor %}
          
         </div>
-    </p>
-</div>-->
+</div>
 
 <!--<div class="row">-->
     <!--<div class="col-md-3">

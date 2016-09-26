@@ -48,6 +48,12 @@
   font-weight: 500;
   color: #999999;
 }
+#top-nav .input-group {
+  		width:300px;
+  		margin-top:7px;
+  		margin-left:20px;
+  		float:left;"
+}
 @media (max-width: 767px) {
   #top-nav .page-title {
     display: none;

@@ -3,12 +3,12 @@ Routes and views for the flask application.
 """
 
 # from datetime import datetime
-from flask import render_template
+from flask import render_template , g
 from comicPy import app
 from models.mylar import mylar_comics, mylar_issues
 from models.security import User, Role
 from models.comicPydb import *
-from flask_security import Security, SQLAlchemyUserDatastore, login_required, roles_required
+from flask_security import current_user,Security, SQLAlchemyUserDatastore, login_required, roles_required
 from config import *
 from functions import getIssueImage
 import zipfile
@@ -18,6 +18,14 @@ import sqlite3
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
+
+
+@app.before_request
+def load_user():
+    if current_user.is_authenticated:
+        g.user_id = current_user.get_id()  # return username in get_id()
+    else:
+        g.user_id = None  # or 'some fake value', whatever
 
 
 @app.route('/')
@@ -30,11 +38,14 @@ def home():
     for issue in new_releases:
         issue.IssueImageURL = getIssueImage(issue.IssueID)
 
+    print g.user_id
+
     """Renders the home page."""
     return render_template(
         'index.html',
         title='Home Page',
         newReleases=new_releases,
+        user=current_user,
         year=datetime.now().year,
     )
 
