@@ -1,10 +1,26 @@
-from datetime import datetime
-from comicPy.models import db
-from models.mylar import mylar_comics, mylar_issues
+# from datetime import datetime
+# from comicPy.models import db
+# from models.mylar import mylar_comics, mylar_issues
 from models.comicPydb import *
 from config import *
-import urllib, json, re
-from pprint import pprint
+import urllib
+import json
+# import re
+# from pprint import pprint
+import sqlite3
+
+
+def synced_with_comicPy(issue_id):
+    # look up issue_id in comicPy database return yes/no
+    mylarConn = sqlite3.connect(comicPy_db_location)
+    with mylarConn:
+        cur = mylarConn.cursor()
+        cur.execute("SELECT issue_id FROM issues WHERE issue_id = ?", (issue_id,))
+        if cur.fetchone():
+            synced = 1
+        else:
+            synced = 0
+    return synced
 
 
 def queryComicVineApi(type, id, querystr):

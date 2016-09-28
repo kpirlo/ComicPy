@@ -3,14 +3,14 @@ Routes and views for the flask application.
 """
 
 # from datetime import datetime
-from flask import render_template , g
+from flask import render_template, g, redirect, url_for
 from comicPy import app
 from models.mylar import mylar_comics, mylar_issues
 from models.security import User, Role
 from models.comicPydb import *
 from flask_security import current_user,Security, SQLAlchemyUserDatastore, login_required, roles_required
 from config import *
-from functions import getIssueImage
+from functions import getIssueImage, synced_with_comicPy
 import zipfile
 import rarfile
 import sqlite3
@@ -36,10 +36,18 @@ def home():
     new_releases = mylar_issues.query.filter_by(Status="Downloaded").order_by(mylar_issues.IssueDate.desc(),
                                                                               mylar_issues.ReleaseDate.desc()).limit(5)\
                                                                               .all()
+
     for issue in new_releases:
+        # check if we have synced this issue with comicPy db.
+        if not synced_with_comicPy(issue.IssueID):
+            print "Not in comicPy db"
+            # insert_issue_into_comicPy(issue)
+
         issue.IssueImageURL = getIssueImage(issue.IssueID)
 
     print g.user_id
+
+
 
     """Renders the home page."""
     return render_template(
@@ -127,6 +135,42 @@ def settings():
         title='settings',
         year=datetime.now().year,
     )
+
+
+@app.route('/syncMylar')
+@roles_required('admin')
+def syncMylar():
+    print "sync"
+    mylar_conn = sqlite3.connect(MylarDbLocation)
+    with mylar_conn:
+        cur = mylar_conn.cursor()
+        cur.execute("SELECT issues.IssueID as issue_id, issues.ComicID as volume_id, "
+                    "replace(comics.ComicLocation,'/media/dataroot/media/comics/','') as issue_folder_path, "
+                    "issues.Location as issue_filename"
+                    " FROM issues"
+                    " LEFT JOIN comics on issues.ComicID = comics.ComicID "
+                    "WHERE issues.Status = 'Downloaded'")
+        issues_mylar = cur.fetchall()
+
+    comicPy_conn = sqlite3.connect(comicPy_db_location)
+    with comicPy_conn:
+        cur2 = comicPy_conn.cursor()
+        cur2.execute("SELECT issue_id FROM issues")
+        issues_comicPy = cur2.fetchall()
+
+        # for issue in issues_mylar:
+        #     if issue not in issues_comicPy:
+        #         print "not in "
+
+    no_match = [issue for issue in issues_mylar if issue not in issues_comicPy]
+    for item in no_match:
+        comicPy_conn = sqlite3.connect(comicPy_db_location)
+        with comicPy_conn:
+            cur = comicPy_conn.cursor()
+            cur.execute("insert into issues (issue_id, volume_id, folder_path, filename) "
+                        "VALUES (item[0],item[1],item[2],item[3]")
+
+    return redirect(url_for('home'))
 
 
 @app.route('/comic/issue/<issueID>')
