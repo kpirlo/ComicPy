@@ -33,8 +33,9 @@ def load_user():
 @login_required
 def home():
     # get latest 5 comics to display on home page
-    new_releases = mylar_issues.query.filter_by(Status="Downloaded").order_by(mylar_issues.ReleaseDate.desc()).limit(
-        5).all()
+    new_releases = mylar_issues.query.filter_by(Status="Downloaded").order_by(mylar_issues.IssueDate.desc(),
+                                                                              mylar_issues.ReleaseDate.desc()).limit(5)\
+                                                                              .all()
     for issue in new_releases:
         issue.IssueImageURL = getIssueImage(issue.IssueID)
 
