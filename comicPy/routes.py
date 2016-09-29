@@ -43,6 +43,9 @@ def home():
     #     cur2 = comicPy_conn.cursor()
     #     cur2.execute("SELECT issue_id FROM issues WHERE cover_date = ?", (newest_cover_date,))
     #    new_releases = cur2.fetchall()
+
+    # TODO make a way to browse folder items not in mylar.
+
     new_releases = mylar_issues.query.filter_by(Status="Downloaded").order_by(mylar_issues.IssueDate.desc(),
                                                                               mylar_issues.ReleaseDate.desc()).limit(5)\
                                                                               .all()
