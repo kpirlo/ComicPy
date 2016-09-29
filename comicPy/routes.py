@@ -14,6 +14,7 @@ from functions import getIssueImage, synced_with_comicPy
 import zipfile
 import rarfile
 import sqlite3
+import pprint
 
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
@@ -32,7 +33,16 @@ def load_user():
 @app.route('/home')
 @login_required
 def home():
-    # get latest 5 comics to display on home page
+    # get newest cover_date and select all with that cover_date
+
+    # comicPy_conn = sqlite3.connect(comicPy_db_location)
+    # with comicPy_conn:
+    #     cur = comicPy_conn.cursor()
+    #     cur.execute("SELECT cover_date FROM issues ORDER BY cover_date DESC LIMIT 1")
+    #     newest_cover_date = cur.fetchone()
+    #     cur2 = comicPy_conn.cursor()
+    #     cur2.execute("SELECT issue_id FROM issues WHERE cover_date = ?", (newest_cover_date,))
+    #    new_releases = cur2.fetchall()
     new_releases = mylar_issues.query.filter_by(Status="Downloaded").order_by(mylar_issues.IssueDate.desc(),
                                                                               mylar_issues.ReleaseDate.desc()).limit(5)\
                                                                               .all()
@@ -41,6 +51,8 @@ def home():
         # check if we have synced this issue with comicPy db.
         if not synced_with_comicPy(issue.IssueID):
             print "Not in comicPy db"
+        else:
+            print "in comicPy! "
             # insert_issue_into_comicPy(issue)
 
         issue.IssueImageURL = getIssueImage(issue.IssueID)
@@ -144,7 +156,7 @@ def syncMylar():
     mylar_conn = sqlite3.connect(MylarDbLocation)
     with mylar_conn:
         cur = mylar_conn.cursor()
-        cur.execute("SELECT issues.IssueID as issue_id, issues.ComicID as volume_id, "
+        cur.execute("SELECT issues.IssueID as issue_id, issues.ComicID as volume_id, IssueDate as cover_date, "
                     "replace(comics.ComicLocation,'/media/dataroot/media/comics/','') as issue_folder_path, "
                     "issues.Location as issue_filename"
                     " FROM issues"
@@ -156,19 +168,16 @@ def syncMylar():
     with comicPy_conn:
         cur2 = comicPy_conn.cursor()
         cur2.execute("SELECT issue_id FROM issues")
-        issues_comicPy = cur2.fetchall()
+        issues_comicPy = [row[0] for row in cur2.fetchall()]
 
-        # for issue in issues_mylar:
-        #     if issue not in issues_comicPy:
-        #         print "not in "
+    no_match = [issue for issue in issues_mylar if issue[0] not in issues_comicPy]
 
-    no_match = [issue for issue in issues_mylar if issue not in issues_comicPy]
     for item in no_match:
         comicPy_conn = sqlite3.connect(comicPy_db_location)
         with comicPy_conn:
             cur = comicPy_conn.cursor()
-            cur.execute("insert into issues (issue_id, volume_id, folder_path, filename) "
-                        "VALUES (item[0],item[1],item[2],item[3]")
+            cur.execute("insert into issues (issue_id, volume_id, cover_date, folder_path, filename) "
+                        "VALUES (?,?,?,?,?)", (item[0], item[1], item[2], item[3], item[4]))
 
     return redirect(url_for('home'))
 
