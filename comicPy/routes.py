@@ -46,6 +46,10 @@ def home():
 
     # TODO make a way to browse folder items not in mylar.
 
+        #     { % if current_user.has_role('admin') %}
+        #      < li > < a href = "#" > Manage Site < / a > < / li >
+        #     { % endif %}
+
     new_releases = mylar_issues.query.filter_by(Status="Downloaded").order_by(mylar_issues.IssueDate.desc(),
                                                                               mylar_issues.ReleaseDate.desc()).limit(5)\
                                                                               .all()
@@ -181,6 +185,8 @@ def syncMylar():
             cur = comicPy_conn.cursor()
             cur.execute("insert into issues (issue_id, volume_id, cover_date, folder_path, filename) "
                         "VALUES (?,?,?,?,?)", (item[0], item[1], item[2], item[3], item[4]))
+
+    # Remove ones not in mylar any more from database.
 
     return redirect(url_for('home'))
 
