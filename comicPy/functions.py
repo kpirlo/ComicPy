@@ -10,6 +10,19 @@ import json
 import sqlite3
 
 
+def sync_with_comicvine(issue_id):
+    response = queryComicVineApi('issue', issue_id, '')
+    if response:
+        print "queried comic vine issue"
+        for i in response['results']['image'].items():
+            print i[0]
+            print i[1]
+
+        # parse, query other objects as needed
+        # then store in database
+    return True
+
+
 def synced_with_comicPy(issue_id):
     # look up issue_id in comicPy database return yes/no
     mylarConn = sqlite3.connect(comicPy_db_location)
@@ -38,8 +51,7 @@ def queryComicVineApi(type, id, querystr):
 
     # record all api calls in db
     print "adding api response to local database"
-    new_record = cache_comicvine(resource_type=type, resource_id=id, request_url=queryURL,
-                                 json_response=ComicVineApiResponseJSONStr)
+    new_record = comicvine_api_history(request_url=queryURL, json_response=ComicVineApiResponseJSONStr)
     db.session.add(new_record)
     db.session.commit()
 

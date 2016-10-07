@@ -23,12 +23,9 @@ class cache_issues(db.Model):
         self.created = created
 
     
-class cache_comicvine(db.Model):
-    __tablename__ = 'cache_comicvine'
+class comicvine_api_history(db.Model):
+    __tablename__ = 'comicvine_api_history'
     id = db.Column(db.Integer(), primary_key=True)
-    resource_type =  db.Column ('resource_type', db.String )
-    resource_id =  db.Column ('resource_id', db.String )
-    request_url = db.Column ('request_url', db.String)
-    json_response =  db.Column ('json_response', db.String )
-    created =  db.Column ('created', db.DateTime,nullable=False,default=datetime.utcnow,onupdate=datetime.utcnow )
-    
+    request_url = db.Column('request_url', db.String)
+    json_response = db.Column('json_response', db.String)
+    created = db.Column('created', db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

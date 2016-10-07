@@ -10,7 +10,7 @@ from models.security import User, Role
 from models.comicPydb import *
 from flask_security import current_user,Security, SQLAlchemyUserDatastore, login_required, roles_required
 from config import *
-from functions import getIssueImage, synced_with_comicPy
+from functions import getIssueImage, synced_with_comicPy, sync_with_comicvine
 import zipfile
 import rarfile
 import sqlite3
@@ -37,58 +37,53 @@ def home():
 
      comicPy_conn = sqlite3.connect(comicPy_db_location)
      with comicPy_conn:
-         cur = comicPy_conn.cursor()
-         cur.execute("SELECT cover_date FROM issues ORDER BY cover_date DESC LIMIT 1")
-         newest_cover_date = cur.fetchone()
          cur2 = comicPy_conn.cursor()
-         cur2.execute("SELECT issue_id, description, image, synced_with_comicvine FROM issues WHERE cover_date = ?", (newest_cover_date,))
+         cur2.execute("SELECT issue_id, description, image, synced_with_comicvine FROM issues WHERE cover_date = (SELECT cover_date FROM issues ORDER BY cover_date DESC LIMIT 1) LIMIT 3")
          new_releases = cur2.fetchall()
          for row in new_releases:
-             if row[3] is None or row[3] == False:
+             if row[3] is None or row[3] is False:
                  print "not synced with comicvine"
                  print "trying sync"
                  if sync_with_comicvine(row[0]):
                      print "synced"
                  else:
                      print "not synced"
-                
-    # if not synced with comic_vine , try to sync.
-
-    # if image none, extract first page as image, store in media/issue_covers/issueid.jpg
+             else:
+                 print "synced already? "
 
 
-    # TODO make a way to browse folder items not in mylar.
+     """Renders the home page."""
+     return render_template(
+            'index.html',
+            title='Home Page',
+            newReleases=new_releases,
+            user=current_user,
+            year=datetime.now().year,
+        )
 
-        #     { % if current_user.has_role('admin') %}
-        #      < li > < a href = "#" > Manage Site < / a > < / li >
-        #     { % endif %}
+
+                # TODO make a way to browse folder items not in mylar.
+
+    #     { % if current_user.has_role('admin') %}
+    #      < li > < a href = "#" > Manage Site < / a > < / li >
+    #     { % endif %}
 
     # new_releases = mylar_issues.query.filter_by(Status="Downloaded").order_by(mylar_issues.IssueDate.desc(),
     #                                                                           mylar_issues.ReleaseDate.desc()).limit(5)\
     #                                                                           .all()
 
-        for issue in new_releases:
-            # check if we have synced this issue with comicPy db.
-            if not synced_with_comicPy(issue.IssueID):
-                print "Not in comicPy db"
-            else:
-                print "in comicPy! "
-                # insert_issue_into_comicPy(issue)
+    # for issue in new_releases:
+    #     # check if we have synced this issue with comicPy db.
+    #     if not synced_with_comicPy(issue.IssueID):
+    #         print "Not in comicPy db"
+    #     else:
+    #         print "in comicPy! "
+    #         # insert_issue_into_comicPy(issue)
+    #
+    #     issue.IssueImageURL = getIssueImage(issue.IssueID)
 
-            issue.IssueImageURL = getIssueImage(issue.IssueID)
+    # print g.user_id
 
-    print g.user_id
-
-
-
-    """Renders the home page."""
-    return render_template(
-        'index.html',
-        title='Home Page',
-        newReleases=new_releases,
-        user=current_user,
-        year=datetime.now().year,
-    )
 
 
 @app.route('/browse')
