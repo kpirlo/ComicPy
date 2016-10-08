@@ -14,6 +14,9 @@ from functions import getIssueImage, synced_with_comicPy, sync_with_comicvine
 import zipfile
 import rarfile
 import sqlite3
+import os
+import os.path
+
 import pprint
 
 # Setup Flask-Security
@@ -38,18 +41,42 @@ def home():
      comicPy_conn = sqlite3.connect(comicPy_db_location)
      with comicPy_conn:
          cur2 = comicPy_conn.cursor()
-         cur2.execute("SELECT issue_id, description, image, synced_with_comicvine FROM issues WHERE cover_date = (SELECT cover_date FROM issues ORDER BY cover_date DESC LIMIT 1) LIMIT 3")
+         cur2.execute("SELECT issue_id, description, image, folder_path, filename, synced_with_comicvine FROM issues WHERE cover_date = (SELECT cover_date FROM issues ORDER BY cover_date DESC LIMIT 1) LIMIT 3")
          new_releases = cur2.fetchall()
          for row in new_releases:
-             if row[3] is None or row[3] is False:
-                 print "not synced with comicvine"
-                 print "trying sync"
-                 if sync_with_comicvine(row[0]):
-                     print "synced"
-                 else:
-                     print "not synced"
-             else:
-                 print "synced already? "
+             if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + row[0] + ".jpg"):
+                 # extract first page and save as image
+                 issue_path = root_comics_folder + row[3] + "/" + row[4]
+                 if os.path.isfile(issue_path):
+                     print "extracting first page"
+                     if row[4][-4:] == '.cbr':
+                         print 'cbr'
+                         with rarfile.RarFile(issue_path, "r") as r:
+                             pages = r.namelist()
+                             pages.sort()
+                             r.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
+                             os.rename("comicPy\\static\\media\\issue_covers\\"+pages[0], "comicPy\\static\\media\\issue_covers\\" + row[0] + ".jpg")
+
+                     elif row[4][-4:] == '.cbz':
+                         print 'cbz'
+                         with zipfile.ZipFile(issue_path, "r") as z:
+                             pages = z.namelist()
+                             for page in pages:
+                                print page
+                                z.extract(page, "comicPy\\static\\media\\issue_covers\\")
+                     else:
+                         print 'fuck if i know'
+             # if row[3] is None or row[3] is False:
+             #     print "not synced with comicvine"
+             #     print "trying sync"
+             #     if sync_with_comicvine(row[0]):
+             #         print "synced"
+             #     else:
+             #         print "not synced"
+             # else:
+             #     print "synced already? "
+     # check if image exists
+
 
 
      """Renders the home page."""

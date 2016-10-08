@@ -6,13 +6,13 @@
     &nbsp;
 </div>
 <div class="jumbotron">
-    <p class="lead">Top 5 New Releases</p>
+    <p class="lead">New Releases</p>
     <p>
         <div>
             {% for issue in newReleases %}
       
-                <a href="/comic/issue/{{issue.IssueID}}">
-                    <img src="{{issue.IssueImageURL}}" />
+                <a href="/comic/issue/{{issue[0]}}">
+                    <img src="static/media/issue_covers/{{issue[0]}}.jpg" height="120" width="80" />
                 </a>
 
             {% endfor %}
