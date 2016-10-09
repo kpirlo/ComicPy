@@ -11,9 +11,11 @@
         <div>
             {% for issue in newReleases %}
       
-                <a href="/comic/issue/{{issue[0]}}">
-                    <img src="static/media/issue_covers/{{issue[0]}}.jpg" height="120" width="80" />
+                <a href="/comic/issue/{{issue.issue_id}}">
+                    <img src="{{ issue.issue_cover_image_path }}" width="150" height="230" />
+                    <div>{{ issue.issue_filename }}</div>
                 </a>
+
 
             {% endfor %}
          

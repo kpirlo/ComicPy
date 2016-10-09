@@ -8,6 +8,20 @@ import json
 # import re
 # from pprint import pprint
 import sqlite3
+import PIL
+from PIL import Image
+
+
+def resize_image(image_to_resize, resize_basewidth=150):
+    basewidth = resize_basewidth
+    img = Image.open(image_to_resize)
+    wpercent = (basewidth/float(img.size[0]))
+    hsize = int((float(img.size[1])*float(wpercent)))
+    img = img.resize((basewidth,hsize), PIL.Image.ANTIALIAS)
+    img.save(image_to_resize)
+    return
+
+
 
 
 def sync_with_comicvine(issue_id):
