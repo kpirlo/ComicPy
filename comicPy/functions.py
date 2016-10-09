@@ -22,40 +22,60 @@ def resize_image(image_to_resize, resize_basewidth=150):
     return
 
 
+def queryComicVineApi(type, id, querystr):
+    if type == 'comic':
+        typeid = '4050'
+    elif type == 'issue':
+        typeid = '4000'
+    elif type == 'publisher':
+        typeid = '4010'
+
+    queryURL = 'http://comicvine.gamespot.com/api/' + type + '/' + typeid + '-' + id + '/?api_key=' + CV_API_KEY + querystr + '&format=json'
+    response = urllib.urlopen(queryURL)
+    ComicVineApiResponseJSONStr = response.read()
+    ComicVineApiResponseJSON = json.loads(ComicVineApiResponseJSONStr)
+
+    # record all api calls in db
+    print "adding api response to local database"
+    new_record = comicvine_api_history(request_url=queryURL, json_response=ComicVineApiResponseJSONStr)
+    db.session.add(new_record)
+    db.session.commit()
+
+    return ComicVineApiResponseJSON
 
 
 def sync_with_comicvine(issue_id):
     issue_response = queryComicVineApi('issue', issue_id, '')
-    if issue_response:
-        issue_aliases = response['results']['aliases']
-        issue_api_detail_url = response['results']['api_detail_url']
-        issue_character_credits = response['results']['character_credits']
-        issue_character_died_in = response['results']['character_died_in']
-        issue_concept_credits = response['results']['concept_credits']
-        issue_cover_date = response['results']['issue_cover_date']
-        issue_date_added = response['results']['issue_date_added']
-        issue_date_last_updated = response['results']['issue_date_last_updated']
-        issue_deck = response['results']['issue_deck']
-        issue_description = response['results']['issue_description']
-        issue_first_appearance_characters = response['results']['issue_first_appearance_characters']
-        issue_first_appearance_concepts = response['results']['issue_first_appearance_concepts']
-        issue_first_appearance_locations = response['results']['issue_first_appearance_locations']
-        issue_first_appearance_objects = response['results']['issue_first_appearance_objects']
-        issue_first_appearance_storyarcs = response['results']['issue_first_appearance_storyarcs']
-        issue_first_appearance_teams = response['results']['issue_first_appearance_teams']
-        issue_has_staff_review = response['results']['issue_has_staff_review']
-        issue_image = response['results']['issue_image']
-        issue_issue_number = response['results']['issue_issue_number']
-        issue_location_credits = response['results']['issue_location_credits']
-        issue_name = response['results']['issue_name']
-        issue_object_credits = response['results']['issue_object_credits']
-        issue_person_credits = response['results']['issue_person_credits']
-        issue_site_detail_url = response['results']['issue_site_detail_url']
-        issue_store_date = response['results']['issue_store_date']
-        issue_story_arc_credits = response['results']['issue_story_arc_credits']
-        issue_team_credits = response['results']['issue_team_credits']
-        issue_team_disbanded_in = response['results']['issue_team_disbanded_in']
-        issue_volume = response['results']['issue_volume']
+    if issue_response and issue_response['error'] == "OK":
+        issue_aliases = issue_response['results']['aliases']
+        issue_api_detail_url = issue_response['results']['api_detail_url']
+        issue_character_credits = issue_response['results']['character_credits']
+        issue_character_died_in = issue_response['results']['character_died_in']
+        issue_concept_credits = issue_response['results']['concept_credits']
+        issue_cover_date = issue_response['results']['issue_cover_date']
+        issue_date_added = issue_response['results']['issue_date_added']
+        issue_date_last_updated = issue_response['results']['issue_date_last_updated']
+        issue_deck = issue_response['results']['issue_deck']
+        issue_description = issue_response['results']['issue_description']
+        issue_first_appearance_characters = issue_response['results']['issue_first_appearance_characters']
+        issue_first_appearance_concepts = issue_response['results']['issue_first_appearance_concepts']
+        issue_first_appearance_locations = issue_response['results']['issue_first_appearance_locations']
+        issue_first_appearance_objects = issue_response['results']['issue_first_appearance_objects']
+        issue_first_appearance_storyarcs = issue_response['results']['issue_first_appearance_storyarcs']
+        issue_first_appearance_teams = issue_response['results']['issue_first_appearance_teams']
+        issue_has_staff_review = issue_response['results']['issue_has_staff_review']
+        issue_image = issue_response['results']['issue_image']
+        issue_issue_number = issue_response['results']['issue_issue_number']
+        issue_location_credits = issue_response['results']['issue_location_credits']
+        issue_name = issue_response['results']['issue_name']
+        issue_object_credits = issue_response['results']['issue_object_credits']
+        issue_person_credits = issue_response['results']['issue_person_credits']
+        issue_site_detail_url = issue_response['results']['issue_site_detail_url']
+        issue_store_date = issue_response['results']['issue_store_date']
+        issue_story_arc_credits = issue_response['results']['issue_story_arc_credits']
+        issue_team_credits = issue_response['results']['issue_team_credits']
+        issue_team_disbanded_in = issue_response['results']['issue_team_disbanded_in']
+        issue_volume = issue_response['results']['issue_volume']
 
         for item in issue_character_credits.items():
             print "character credit - api_detail_url: " + item[0]
@@ -126,26 +146,6 @@ def synced_with_comicPy(issue_id):
     return synced
 
 
-def queryComicVineApi(type, id, querystr):
-    if type == 'comic':
-        typeid = '4050'
-    elif type == 'issue':
-        typeid = '4000'
-    elif type == 'publisher':
-        typeid = '4010'
-
-    queryURL = 'http://comicvine.gamespot.com/api/' + type + '/' + typeid + '-' + id + '/?api_key=' + CV_API_KEY + querystr + '&format=json'
-    response = urllib.urlopen(queryURL)
-    ComicVineApiResponseJSONStr = response.read()
-    ComicVineApiResponseJSON = json.loads(ComicVineApiResponseJSONStr)
-
-    # record all api calls in db
-    print "adding api response to local database"
-    new_record = comicvine_api_history(request_url=queryURL, json_response=ComicVineApiResponseJSONStr)
-    db.session.add(new_record)
-    db.session.commit()
-
-    return ComicVineApiResponseJSON
 
 
 def getIssueImage(issueID):

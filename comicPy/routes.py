@@ -30,7 +30,7 @@ def load_user():
         g.user_id = current_user.get_id()  # return username in get_id()
     else:
         g.user_id = None  # or 'some fake value', whatever
-
+    # get values if comicvine api exists and comicvine is enabled.
 
 @app.route('/')
 @app.route('/home')
@@ -39,6 +39,7 @@ def home():
     # get newest cover_date and select all with that cover_date
     # profile info
     # new releases
+    new_releases_list = []
     # user reading list
     # user reading history
 
@@ -48,7 +49,7 @@ def home():
         cur.execute("SELECT issue_id, description, image, folder_path, filename, synced_with_comicvine "
             "FROM issues WHERE cover_date = (SELECT cover_date FROM issues ORDER BY cover_date DESC LIMIT 1) LIMIT 3")
         new_releases = cur.fetchall()
-        new_releases_list = []
+
         for row in new_releases:
             # create new list to hold new release issue objects
             # create new object for issue
@@ -56,39 +57,46 @@ def home():
             issue_instance.issue_id = row[0]
             issue_instance.issue_path = root_comics_folder + row[3] + "/" + row[4]
             issue_instance.issue_filename = row[4]
+            issue_instance.synced_with_comicvine = row[5]
             if not os.path.isfile(issue_instance.issue_path):
                 print "File Missing.."
                 issue_instance.issue_cover_image_path = "static\\media\\missing_file.jpg"
             else:
-                # try to get comicvine info if we have not
+                if not issue_instance.synced_with_comicvine or issue_instance.synced_with_comicvine == "":
+                    print "issue not synced"
+                    # if unable to get comic vine or no cover exists at least make a cover:
+                    if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + row[0] + ".jpg"):
+                        # try to query comicvine
+                        # if comicvine enabled
+                        # if comicvine api key exists
+                        #   sync_with_comicvine(issue_instance.issue_id)
+                        # else error no key
 
-                # if unable to get comic vine or no cover exists at least make a cover:
-                if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + row[0] + ".jpg"):
-                    if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg"):
-                        # issue_cover_image_path = extract_cover()
-                        # extract first page and save as image
-                        print "extracting first page"
-                        if row[4][-4:] == '.cbr':
-                            print 'cbr'
-                            with rarfile.RarFile(issue_path, "r") as r:
-                                pages = r.namelist()
-                                pages.sort()
-                                r.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
-                                os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
-                                          "comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg")
-                                resize_image("comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg")
+                        if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg"):
+                            # issue_cover_image_path = extract_cover()
+                            # extract first page and save as image
+                            print "extracting first page"
+                            if row[4][-4:] == '.cbr':
+                                print 'cbr'
+                                with rarfile.RarFile(issue_path, "r") as r:
+                                    pages = r.namelist()
+                                    pages.sort()
+                                    r.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
+                                    os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
+                                              "comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg")
+                                    resize_image("comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg")
 
-                        elif row[4][-4:] == '.cbz':
-                            print 'cbz'
-                            with zipfile.ZipFile(issue_path, "r") as z:
-                                pages.sort()
-                                z.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
-                                os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
-                                          "comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg")
-                                resize_image("comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg")
-                        else:
-                            print 'fuck if i know'
-                    issue_instance.issue_cover_image_path = "static\\media\\issue_covers\\" + row[0] + "-page1.jpg"
+                            elif row[4][-4:] == '.cbz':
+                                print 'cbz'
+                                with zipfile.ZipFile(issue_path, "r") as z:
+                                    pages.sort()
+                                    z.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
+                                    os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
+                                              "comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg")
+                                    resize_image("comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg")
+                            else:
+                                print 'fuck if i know'
+                        issue_instance.issue_cover_image_path = "static\\media\\issue_covers\\" + row[0] + "-page1.jpg"
             new_releases_list.append(issue_instance)
 
             for obj in new_releases_list:
@@ -247,7 +255,9 @@ def syncMylar():
                         "VALUES (?,?,?,?,?)", (item[0], item[1], item[2], item[3], item[4]))
 
     # Remove ones not in mylar any more from database.
+    # create no-match list for volumes and publishers also
 
+    
     return redirect(url_for('home'))
 
 
