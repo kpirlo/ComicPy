@@ -243,7 +243,8 @@ def syncMylar():
     mylar_conn = sqlite3.connect(MylarDbLocation)
     with mylar_conn:
         cur = mylar_conn.cursor()
-        cur.execute("SELECT DISTINCT issues.ComicID AS volume_id, ComicPublisher AS volume_publisher_name, "
+        cur.execute("SELECT DISTINCT issues.ComicID AS volume_id, comics.ComicName AS comic_name, "
+                    "comics.ComicYear AS start_year, comics.ComicPublisher AS volume_publisher_name,  "
                     "replace(comics.ComicLocation,'/media/dataroot/media/comics/','') AS issue_folder_path "
                     " FROM issues"
                     " LEFT JOIN comics ON issues.ComicID = comics.ComicID "
@@ -293,8 +294,8 @@ def syncMylar():
         comicPy_conn = sqlite3.connect(comicPy_db_location)
         with comicPy_conn:
             cur = comicPy_conn.cursor()
-            cur.execute("INSERT INTO volumes (volume_id, publisher, volume_folder_path) "
-                        "VALUES (?,?,?)", (item[0], item[1], item[2]))
+            cur.execute("INSERT INTO volumes (volume_id, name, start_year, publisher, volume_folder_path) "
+                        "VALUES (?,?,?,?,?)", (item[0], item[1], item[2], item[3], item[4]))
 
     for item in no_match_publishers:
         print "add publisher"
