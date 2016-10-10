@@ -32,6 +32,7 @@ def load_user():
         g.user_id = None  # or 'some fake value', whatever
     # get values if comicvine api exists and comicvine is enabled.
 
+
 @app.route('/')
 @app.route('/home')
 @login_required
@@ -47,17 +48,28 @@ def home():
     comicPy_conn = sqlite3.connect(comicPy_db_location)
     with comicPy_conn:
         cur = comicPy_conn.cursor()
-        cur.execute("SELECT issue_id, description, folder_path, filename, synced_with_comicvine "
-            "FROM issues WHERE cover_date = (SELECT cover_date FROM issues ORDER BY cover_date DESC LIMIT 1) LIMIT 3")
+        cur.execute("SELECT "
+                    "issues.issue_id, "
+                    "issues.description, "
+                    "issues.volume_issue_number, "
+                    "issues.folder_path, "
+                    "issues.filename, "
+                    "issues.synced_with_comicvine, "
+                    "volumes.name AS volume_name, "
+                    "volumes.start_year AS volume_start_year, "
+                    "volumes.publisher AS volume_publisher "
+                    "FROM issues "
+                    "LEFT JOIN volumes on issues.volume_id = volumes.volume_id "
+                    "WHERE cover_date = (SELECT cover_date FROM issues ORDER BY cover_date DESC LIMIT 1) LIMIT 2")
         new_releases = cur.fetchall()
 
         for row in new_releases:
             # create new object for each issue
             issue_instance = issue()
             issue_instance.issue_id = row[0]
-            issue_instance.issue_path = root_comics_folder + row[2] + "/" + row[3]
-            issue_instance.issue_filename = row[3]
-            issue_instance.synced_with_comicvine = row[4]
+            issue_instance.issue_path = root_comics_folder + row[3] + "/" + row[4]
+            issue_instance.issue_filename = row[4]
+            issue_instance.synced_with_comicvine = row[5]
             # try to query comicvine
             # if comicvine enabled
             # if comicvine api key exists

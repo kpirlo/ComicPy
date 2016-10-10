@@ -10,6 +10,52 @@ import json
 import sqlite3
 import PIL
 from PIL import Image
+import zipfile
+import rarfile
+import os
+import os.path
+
+
+def get_issue_cover_image_path(issue_instance):
+    if not os.path.isfile(issue_instance.issue_path):
+        print "File Missing.."
+        issue_instance.issue_cover_image_path = "static\\media\\missing_file.jpg"
+    else:
+        if not issue_instance.synced_with_comicvine or issue_instance.synced_with_comicvine == "":
+            print "issue not synced"
+            # if unable to get comic vine or no cover exists at least make a cover:
+            if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + ".jpg"):
+                if not os.path.isfile(
+                                        "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg"):
+                    # issue_cover_image_path = extract_cover()
+                    # extract first page and save as image
+                    print "extracting first page"
+                    if issue_instance.issue_filename[-4:] == '.cbr':
+                        print 'cbr'
+                        with rarfile.RarFile(issue_instance.issue_path, "r") as r:
+                            pages = r.namelist()
+                            pages.sort()
+                            r.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
+                            os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
+                                      "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+                            resize_image(
+                                "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+
+                    elif issue_instance.issue_filename[-4:] == '.cbz':
+                        print 'cbz'
+                        with zipfile.ZipFile(issue_instance.issue_path, "r") as z:
+                            pages = z.namelist()
+                            pages.sort()
+                            z.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
+                            os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
+                                      "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+                            resize_image(
+                                "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+                    else:
+                        print 'fuck if i know'
+                issue_instance.issue_cover_image_path = "static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg"
+
+    return
 
 
 def resize_image(image_to_resize, resize_basewidth=150):
