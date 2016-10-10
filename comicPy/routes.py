@@ -47,7 +47,7 @@ def home():
     comicPy_conn = sqlite3.connect(comicPy_db_location)
     with comicPy_conn:
         cur = comicPy_conn.cursor()
-        cur.execute("SELECT issue_id, description, image, folder_path, filename, synced_with_comicvine "
+        cur.execute("SELECT issue_id, description, folder_path, filename, synced_with_comicvine "
             "FROM issues WHERE cover_date = (SELECT cover_date FROM issues ORDER BY cover_date DESC LIMIT 1) LIMIT 3")
         new_releases = cur.fetchall()
 
@@ -55,9 +55,9 @@ def home():
             # create new object for each issue
             issue_instance = issue()
             issue_instance.issue_id = row[0]
-            issue_instance.issue_path = root_comics_folder + row[3] + "/" + row[4]
-            issue_instance.issue_filename = row[4]
-            issue_instance.synced_with_comicvine = row[5]
+            issue_instance.issue_path = root_comics_folder + row[2] + "/" + row[3]
+            issue_instance.issue_filename = row[3]
+            issue_instance.synced_with_comicvine = row[4]
             # try to query comicvine
             # if comicvine enabled
             # if comicvine api key exists
@@ -71,32 +71,33 @@ def home():
                 if not issue_instance.synced_with_comicvine or issue_instance.synced_with_comicvine == "":
                     print "issue not synced"
                     # if unable to get comic vine or no cover exists at least make a cover:
-                    if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + row[0] + ".jpg"):
-                        if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg"):
+                    if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + ".jpg"):
+                        if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg"):
                             # issue_cover_image_path = extract_cover()
                             # extract first page and save as image
                             print "extracting first page"
-                            if row[4][-4:] == '.cbr':
+                            if issue_instance.issue_filename[-4:] == '.cbr':
                                 print 'cbr'
                                 with rarfile.RarFile(issue_instance.issue_path, "r") as r:
                                     pages = r.namelist()
                                     pages.sort()
                                     r.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
                                     os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
-                                              "comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg")
-                                    resize_image("comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg")
+                                              "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+                                    resize_image("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
 
-                            elif row[4][-4:] == '.cbz':
+                            elif issue_instance.issue_filename[-4:] == '.cbz':
                                 print 'cbz'
                                 with zipfile.ZipFile(issue_instance.issue_path, "r") as z:
+                                    pages = z.namelist()
                                     pages.sort()
                                     z.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
                                     os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
-                                              "comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg")
-                                    resize_image("comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg")
+                                              "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+                                    resize_image("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
                             else:
                                 print 'fuck if i know'
-                        issue_instance.issue_cover_image_path = "static\\media\\issue_covers\\" + row[0] + "-page1.jpg"
+                        issue_instance.issue_cover_image_path = "static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg"
             new_releases_list.append(issue_instance)
 
             for obj in new_releases_list:
