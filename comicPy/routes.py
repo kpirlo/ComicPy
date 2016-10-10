@@ -39,6 +39,7 @@ def home():
     # get newest cover_date and select all with that cover_date
     # profile info
     # new releases
+    # create new list to hold new release issue objects
     new_releases_list = []
     # user reading list
     # user reading history
@@ -51,13 +52,18 @@ def home():
         new_releases = cur.fetchall()
 
         for row in new_releases:
-            # create new list to hold new release issue objects
-            # create new object for issue
+            # create new object for each issue
             issue_instance = issue()
             issue_instance.issue_id = row[0]
             issue_instance.issue_path = root_comics_folder + row[3] + "/" + row[4]
             issue_instance.issue_filename = row[4]
             issue_instance.synced_with_comicvine = row[5]
+            # try to query comicvine
+            # if comicvine enabled
+            # if comicvine api key exists
+            #   sync_with_comicvine(issue_instance.issue_id)
+            # else error no key
+            # move into function to get issue_cover_image_path()
             if not os.path.isfile(issue_instance.issue_path):
                 print "File Missing.."
                 issue_instance.issue_cover_image_path = "static\\media\\missing_file.jpg"
@@ -66,19 +72,13 @@ def home():
                     print "issue not synced"
                     # if unable to get comic vine or no cover exists at least make a cover:
                     if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + row[0] + ".jpg"):
-                        # try to query comicvine
-                        # if comicvine enabled
-                        # if comicvine api key exists
-                        #   sync_with_comicvine(issue_instance.issue_id)
-                        # else error no key
-
                         if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + row[0] + "-page1.jpg"):
                             # issue_cover_image_path = extract_cover()
                             # extract first page and save as image
                             print "extracting first page"
                             if row[4][-4:] == '.cbr':
                                 print 'cbr'
-                                with rarfile.RarFile(issue_path, "r") as r:
+                                with rarfile.RarFile(issue_instance.issue_path, "r") as r:
                                     pages = r.namelist()
                                     pages.sort()
                                     r.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
@@ -88,7 +88,7 @@ def home():
 
                             elif row[4][-4:] == '.cbz':
                                 print 'cbz'
-                                with zipfile.ZipFile(issue_path, "r") as z:
+                                with zipfile.ZipFile(issue_instance.issue_path, "r") as z:
                                     pages.sort()
                                     z.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
                                     os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
@@ -233,7 +233,7 @@ def syncMylar():
         cur = mylar_conn.cursor()
         cur.execute("SELECT issues.IssueID AS issue_id, issues.ComicID AS volume_id, IssueDate AS cover_date, "
                     "replace(comics.ComicLocation,'/media/dataroot/media/comics/','') AS issue_folder_path, "
-                    "issues.Location AS issue_filename"
+                    "issues.Location AS issue_filename, Issue_Number AS issue_number"
                     " FROM issues"
                     " LEFT JOIN comics ON issues.ComicID = comics.ComicID "
                     "WHERE issues.Status = 'Downloaded'")
@@ -277,15 +277,15 @@ def syncMylar():
         publishers_comicPy = [row[0] for row in cur.fetchall()]
 
     no_match_issues = [issue for issue in issues_mylar if issue[0] not in issues_comicPy]
-    no_match_volumes = [issue for issue in volumes_mylar if issue[0] not in volumes_comicPy]
-    no_match_publishers = [issue for issue in publishers_mylar if issue[0] not in publishers_comicPy]
+    no_match_volumes = [volume for volume in volumes_mylar if volume[0] not in volumes_comicPy]
+    no_match_publishers = set(publishers_mylar) - set(publishers_comicPy)
 
     for item in no_match_issues:
         comicPy_conn = sqlite3.connect(comicPy_db_location)
         with comicPy_conn:
             cur = comicPy_conn.cursor()
-            cur.execute("INSERT INTO issues (issue_id, volume_id, cover_date, folder_path, filename) "
-                        "VALUES (?,?,?,?,?)", (item[0], item[1], item[2], item[3], item[4]))
+            cur.execute("INSERT INTO issues (issue_id, volume_id, cover_date, folder_path, filename, volume_issue_number) "
+                        "VALUES (?,?,?,?,?,?)", (item[0], item[1], item[2], item[3], item[4], item[5]))
 
     for item in no_match_volumes:
         print "add volume"
@@ -304,8 +304,6 @@ def syncMylar():
                         "VALUES (?)", (item,))
 
     # Remove ones not in mylar any more from database.
-    # create no-match list for volumes and publishers also
-
 
     return redirect(url_for('home'))
 
