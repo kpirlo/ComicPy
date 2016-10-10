@@ -239,25 +239,74 @@ def syncMylar():
                     "WHERE issues.Status = 'Downloaded'")
         issues_mylar = cur.fetchall()
 
+    mylar_conn = sqlite3.connect(MylarDbLocation)
+    with mylar_conn:
+        cur = mylar_conn.cursor()
+        cur.execute("SELECT DISTINCT issues.ComicID AS volume_id, ComicPublisher AS volume_publisher_name, "
+                    "replace(comics.ComicLocation,'/media/dataroot/media/comics/','') AS issue_folder_path "
+                    " FROM issues"
+                    " LEFT JOIN comics ON issues.ComicID = comics.ComicID "
+                    "WHERE issues.Status = 'Downloaded'")
+        volumes_mylar = cur.fetchall()
+
+    mylar_conn = sqlite3.connect(MylarDbLocation)
+    with mylar_conn:
+        cur = mylar_conn.cursor()
+        cur.execute("SELECT DISTINCT ComicPublisher AS volume_publisher_name "
+                    " FROM issues"
+                    " LEFT JOIN comics ON issues.ComicID = comics.ComicID "
+                    "WHERE issues.Status = 'Downloaded'")
+        publishers_mylar = [row[0] for row in cur.fetchall()]
+
     comicPy_conn = sqlite3.connect(comicPy_db_location)
     with comicPy_conn:
-        cur2 = comicPy_conn.cursor()
-        cur2.execute("SELECT issue_id FROM issues")
-        issues_comicPy = [row[0] for row in cur2.fetchall()]
+        cur = comicPy_conn.cursor()
+        cur.execute("SELECT issue_id FROM issues")
+        issues_comicPy = [row[0] for row in cur.fetchall()]
 
-    no_match = [issue for issue in issues_mylar if issue[0] not in issues_comicPy]
+    comicPy_conn = sqlite3.connect(comicPy_db_location)
+    with comicPy_conn:
+        cur = comicPy_conn.cursor()
+        cur.execute("SELECT volume_id FROM volumes")
+        volumes_comicPy = [row[0] for row in cur.fetchall()]
 
-    for item in no_match:
+    comicPy_conn = sqlite3.connect(comicPy_db_location)
+    with comicPy_conn:
+        cur = comicPy_conn.cursor()
+        cur.execute("SELECT name FROM publishers")
+        publishers_comicPy = [row[0] for row in cur.fetchall()]
+
+    no_match_issues = [issue for issue in issues_mylar if issue[0] not in issues_comicPy]
+    no_match_volumes = [issue for issue in volumes_mylar if issue[0] not in volumes_comicPy]
+    no_match_publishers = [issue for issue in publishers_mylar if issue[0] not in publishers_comicPy]
+
+    for item in no_match_issues:
         comicPy_conn = sqlite3.connect(comicPy_db_location)
         with comicPy_conn:
             cur = comicPy_conn.cursor()
             cur.execute("INSERT INTO issues (issue_id, volume_id, cover_date, folder_path, filename) "
                         "VALUES (?,?,?,?,?)", (item[0], item[1], item[2], item[3], item[4]))
 
+    for item in no_match_volumes:
+        print "add volume"
+        comicPy_conn = sqlite3.connect(comicPy_db_location)
+        with comicPy_conn:
+            cur = comicPy_conn.cursor()
+            cur.execute("INSERT INTO volumes (volume_id, publisher, volume_folder_path) "
+                        "VALUES (?,?,?)", (item[0], item[1], item[2]))
+
+    for item in no_match_publishers:
+        print "add publisher"
+        comicPy_conn = sqlite3.connect(comicPy_db_location)
+        with comicPy_conn:
+            cur = comicPy_conn.cursor()
+            cur.execute("INSERT INTO publishers (name) "
+                        "VALUES (?)", (item,))
+
     # Remove ones not in mylar any more from database.
     # create no-match list for volumes and publishers also
 
-    
+
     return redirect(url_for('home'))
 
 
