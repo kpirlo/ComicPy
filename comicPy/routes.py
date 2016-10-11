@@ -39,6 +39,7 @@ def load_user():
 def home():
     # get newest cover_date and select all with that cover_date
     # profile info
+    #
     # new releases
     # create new list to hold new release issue objects
     new_releases_list = []

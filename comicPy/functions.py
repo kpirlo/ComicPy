@@ -68,6 +68,34 @@ def resize_image(image_to_resize, resize_basewidth=150):
     return
 
 
+def extract():
+    # file to extract
+    # page number or all
+    # path to extract to or memory
+    if issue_instance.issue_filename[-4:] == '.cbr':
+        print 'cbr'
+        with rarfile.RarFile(issue_instance.issue_path, "r") as r:
+            pages = r.namelist()
+            pages.sort()
+            r.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
+            os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
+                      "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+            resize_image("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+
+    elif issue_instance.issue_filename[-4:] == '.cbz':
+        print 'cbz'
+        with zipfile.ZipFile(issue_instance.issue_path, "r") as z:
+            pages = z.namelist()
+            pages.sort()
+            z.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
+            os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
+                      "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+            resize_image("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+    else:
+        print 'what the fuck kind of file you trying to give me anyway? '
+    return
+
+
 def queryComicVineApi(type, id, querystr):
     if type == 'comic':
         typeid = '4050'
