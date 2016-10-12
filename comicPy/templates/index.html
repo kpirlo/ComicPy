@@ -12,8 +12,8 @@
             {% for issue in newReleases %}
       
                 <a href="/comic/issue/{{issue.issue_id}}">
-                    <img src="{{ issue.issue_cover_image_path }}" width="150" height="230" />
-                    <div>{{ issue.issue_filename }}</div>
+                    <img src="{{ issue.cover_path }}" width="150" height="230" />
+                    <div>{{ issue.filename }}</div>
                 </a>
 
 
