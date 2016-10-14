@@ -40,6 +40,7 @@ def home():
     # get newest cover_date and select all with that cover_date
     # profile info
     #
+    missing_files_list = []
     # new releases
     # create new list to hold new release issue objects
     new_releases_list = []
@@ -52,10 +53,10 @@ def home():
         cur.execute("SELECT "
                     "issues.issue_id, "
                     "issues.description, "
-                    "issues.volume_issue_number, "
-                    "issues.folder_path, "
+                    "issues.issue_number, "
+                    "issues.path, "
                     "issues.filename, "
-                    "issues.synced_with_comicvine, "
+                    "issues.synced_with_cv, "
                     "volumes.name AS volume_name, "
                     "volumes.start_year AS volume_start_year, "
                     "volumes.publisher AS volume_publisher "
@@ -76,41 +77,54 @@ def home():
             #   sync_with_comicvine(issue_instance.issue_id)
             # else error no key
             # move into function to get issue_cover_image_path()
-            if not os.path.isfile(issue_instance.path):
-                print "File Missing.."
-                issue_instance.cover_path = "static\\media\\missing_file.jpg"
-            else:
+            # is cv enabled/key set?
+            if CV_API_KEY and not CV_API_KEY == "":
                 if not issue_instance.synced_with_cv or issue_instance.synced_with_cv == "":
                     print "issue not synced"
-                    # if unable to get comic vine or no cover exists at least make a cover:
-                    if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + ".jpg"):
-                        if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg"):
-                            # issue_cover_image_path = extract_cover()
-                            # extract first page and save as image
-                            print "extracting first page"
-                            if issue_instance.filename[-4:] == '.cbr':
-                                print 'cbr'
-                                with rarfile.RarFile(issue_instance.path, "r") as r:
-                                    pages = r.namelist()
-                                    pages.sort()
-                                    r.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
-                                    os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
-                                              "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
-                                    resize_image("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+                    print "attempting sync"
+                    # sync_with_cv(issue, issue_instance.issue_id)
+                else:
+                    print "already synced on DATE"
+            else:
+                print "CV KEY MISSING - Will not attempt any sync"
 
-                            elif issue_instance.filename[-4:] == '.cbz':
-                                print 'cbz'
-                                with zipfile.ZipFile(issue_instance.path, "r") as z:
-                                    pages = z.namelist()
-                                    pages.sort()
-                                    z.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
-                                    os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
-                                              "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
-                                    resize_image("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
-                            else:
-                                print 'fuck if i know'
-                        issue_instance.cover_path = "static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg"
-            new_releases_list.append(issue_instance)
+            # check file system for cover
+            if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + ".jpg"):
+                # if no cover , check file system for page1 as cover.
+                if not os.path.isfile("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg"):
+                    # No page1 exists, extract page1 for cover.
+                    # extract_issue_page(issue_instance.issue_id, "1")
+                    #   --paramaters issue_id, page_number or ALL -- try to extract into memory
+                    # if returned
+                    # save returned object in cover directory
+                    # else fail could not extract (add to failed_issues_list ?)
+                    print "extracting first page"
+                    if issue_instance.filename[-4:] == '.cbr':
+                        print 'cbr'
+                        with rarfile.RarFile(issue_instance.path, "r") as r:
+                            pages = r.namelist()
+                            pages.sort()
+                            r.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
+                            os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
+                                      "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+                            resize_image("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+
+                    elif issue_instance.filename[-4:] == '.cbz':
+                        print 'cbz'
+                        with zipfile.ZipFile(issue_instance.path, "r") as z:
+                            pages = z.namelist()
+                            pages.sort()
+                            z.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
+                            os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
+                                      "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+                            resize_image("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+                    else:
+                        print 'fuck if i know'
+                issue_instance.cover_path = "static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg"
+            if os.path.isfile(issue_instance.path):
+                new_releases_list.append(issue_instance)
+            else:
+                missing_files_list.append(issue_instance)
 
             for obj in new_releases_list:
                 print "inside new list of issue objects"
@@ -357,4 +371,18 @@ def issueDetail(issueID):
         Issue=IssueList,
         pages=pages,
         message='List Issue Details'
+    )
+
+
+@app.route('/extract/<issue_id>/<page_number>')
+@login_required
+def extract(issue_id=None, page_number="all"):
+
+
+    """Renders the home page."""
+    return render_template(
+        'browseVolumeId.html',
+        title='Browse Publisher',
+        volumeIssues=volumeIssues,
+        year=datetime.now().year,
     )

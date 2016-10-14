@@ -116,10 +116,34 @@ class character_cv:
     def __init__(self,
                  cv_aliases,
                  cv_api_detail_url,
+                 cv_birth,
+                 cv_character_enemies,
+                 cv_character_friends,
+                 cv_count_of_issue_appearances,
+                 cv_creators,
+                 cv_date_added,
+                 cv_date_last_updated,
                  cv_deck,
                  cv_description,
+                 cv_first_appeared_in_issue,
+                 cv_gender,
+                 cv_id,
+                 cv_image,
+                 cv_issues,
+                 cv_issues_died_in,
+                 cv_movies,
                  cv_name,
-                 cv_site_detail_url
+                 cv_origin,
+                 cv_powers,
+                 cv_publisher,
+                 cv_real_name,
+                 cv_site_detail_url,
+                 cv_story_arc_credits,
+                 cv_team_enemies,
+                 cv_team_friends,
+                 cv_teams,
+                 cv_volumes,
+                 cv_version
                  ):
 
 #
@@ -127,12 +151,22 @@ class concept_cv:
     def __init__(self,
                  cv_aliases,
                  cv_api_detail_url,
+                 cv_count_of_isssue_appearances,
+                 cv_date_added,
+                 cv_date_last_updated,
                  cv_deck,
                  cv_description,
+                 cv_first_appeared_in_issue,
+                 cv_id,
+                 cv_image,
+                 cv_issues,
+                 cv_movies,
                  cv_name,
-                 cv_site_detail_url
+                 cv_site_detail_url,
+                 cv_start_year,
+                 cv_volumes,
+                 cv_version,
                  ):
-
 
 #
 class location_cv:

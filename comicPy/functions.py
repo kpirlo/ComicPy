@@ -68,7 +68,7 @@ def resize_image(image_to_resize, resize_basewidth=150):
     return
 
 
-def extract():
+def extract_issue(issue_instance, page_number):
     # file to extract
     # page number or all
     # path to extract to or memory
