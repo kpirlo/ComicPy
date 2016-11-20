@@ -98,29 +98,33 @@ def home():
                     # if returned
                     # save returned object in cover directory
                     # else fail could not extract (add to failed_issues_list ?)
-                    print "extracting first page"
-                    if issue_instance.filename[-4:] == '.cbr':
-                        print 'cbr'
-                        with rarfile.RarFile(issue_instance.path, "r") as r:
-                            pages = r.namelist()
-                            pages.sort()
-                            r.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
-                            os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
-                                      "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
-                            resize_image("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
 
-                    elif issue_instance.filename[-4:] == '.cbz':
-                        print 'cbz'
-                        with zipfile.ZipFile(issue_instance.path, "r") as z:
-                            pages = z.namelist()
-                            pages.sort()
-                            z.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
-                            os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
-                                      "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
-                            resize_image("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
-                    else:
-                        print 'fuck if i know'
+                    if os.path.isfile(issue_instance.path):
+                        print "extracting first page" + issue_instance.path
+                        if issue_instance.filename[-4:] == '.cbr':
+                            print 'cbr'
+                            with rarfile.RarFile(issue_instance.path, "r") as r:
+                                pages = r.namelist()
+                                pages.sort()
+                                r.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
+                                os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
+                                          "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+                                resize_image("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+
+                        elif issue_instance.filename[-4:] == '.cbz':
+                            print 'cbz'
+                            with zipfile.ZipFile(issue_instance.path, "r") as z:
+                                pages = z.namelist()
+                                pages.sort()
+                                z.extract(pages[0], "comicPy\\static\\media\\issue_covers\\")
+                                os.rename("comicPy\\static\\media\\issue_covers\\" + pages[0],
+                                          "comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+                                resize_image("comicPy\\static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg")
+                        else:
+                            print 'fuck if i know'
+
                 issue_instance.cover_path = "static\\media\\issue_covers\\" + issue_instance.issue_id + "-page1.jpg"
+
             if os.path.isfile(issue_instance.path):
                 new_releases_list.append(issue_instance)
             else:
